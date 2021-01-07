@@ -139,7 +139,7 @@ const char index_html[] PROGMEM =  R"(
          </div>
       </div>
       <div class="footer">
-         <p>Pueblo&copy;2021  <a href="https://#">Github</a></p>
+         <p>Pueblo&copy;2021  <a href="https://github.com/Puebllo/node_pir_led_pwm">Github</a></p>
       </div>
    </body>
 </html>
