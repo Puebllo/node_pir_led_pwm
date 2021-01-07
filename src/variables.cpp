@@ -8,16 +8,6 @@ String nodeNameBase = "node_pir";
 
 boolean factoryReset = false;
 
-//DEV
-// char* ap_ssid = "HA-IOT";
-// char* ap_password = "43!&dgf2sQn@";
-
-// char* mqtt_server = "192.168.1.19";
-// uint16_t mqtt_port = 1883;
-// char*  mqtt_user = "homeassistant";
-// char*  mqtt_pwd = "kieweix6zohna0doh4eigh8joNieVae1to6UuNahfaeNgoosh3ohh9leifai7awe";
-
-
 String ap_ssid = "";
 String ap_password = "";
 
