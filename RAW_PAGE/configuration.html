@@ -1,0 +1,138 @@
+
+
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Brightness Control</title>
+      <style>
+         html{
+         background-color: #a0b8bd;
+         }
+         .border{
+         border: 3px solid #6f8a8f;
+         border-radius: 10px;
+         }
+         .column {
+         float: left;
+         width: 25%;
+         margin-left: 6.25%;
+         }
+         .container{
+         max-height: 90%;
+         overflow-y: auto;
+         }
+         .row:after {
+         content: "";
+         display: table;
+         clear: both;
+         }
+         .center {
+         text-align: center;
+         }
+         .fb{
+         background-color: #8ca6ab;
+         }
+         .light_red{
+         background-color: rgba(255, 0, 0, 0.6);
+         border: 3px solid rgba(255, 0, 0, 0.8);
+         border-radius: 10px;
+         }
+         .footer {
+         position: fixed;
+         left: 0;
+         bottom: 0;
+         width: 100%;
+         background-color: #8ca6ab;
+         color: white;
+         text-align: center;
+         }
+      </style>
+   </head>
+   <body>
+   <div class="container">
+      <div class="row center">
+         <div class="column">
+            <form action="/devBehConfig" method="post" class="fb border">
+               <br>
+               <h1>Device behavior</h1>
+               <p>Change parameters as you wish</p>
+               <label for="defBright">Default brightness [%]:</label><br>
+               <input type="text" id="defBright" name="defBright" value="80"><br><br>
+               <label for="lightTime">Light time [s]:</label><br>
+               <input type="text" id="lightTime" name="lightTime" value="15"><br><br>
+               <label for="fadeInTime">Led fade in time [ms]:</label><br>
+               <input type="text" id="fadeInTime" name="fadeInTime" value="10"><br><br>
+               <label for="fadeOutTime">Led fade out time [ms]:</label><br>
+               <input type="text" id="fadeOutTime" name="fadeOutTime" value="10"><br><br>
+               <input type="submit" value="Submit"><br><br>
+            </form>
+         </div>
+         <div class="column">
+            <form action="/mqttConfig" method="post" class="fb border">
+               <br>
+               <h1>MQTT Settings</h1>
+               <p>Set mqtt parameters</p>
+               <label for="nodeName">Node name</label><br>
+               <input type="text" id="nodeName" name="nodeName" value="kuchnia-szafki-pir"><br><br>
+               <label for="mqttServer">MQTT Server</label><br>
+               <input type="text" id="mqttServer" name="mqttServer" value="192.168.1.?"><br><br>
+               <label for="mqttPort">MQTT Port</label><br>
+               <input type="text" id="mqttPort" name="mqttPort" value="1883"><br><br>
+               <label for="mqttUser">User</label><br>
+               <input type="text" id="mqttUser" name="mqttUser" value="homeassistant"><br><br>
+               <label for="mqttPwd">Password</label><br>
+               <input type="password" id="mqttPwd" name="mqttPwd" value="homeassistant"><br><br>
+               <input type="submit" value="Submit"><br><br>
+            </form>
+            <br>
+            <form action="/discoverHA" method="post" class="fb border">
+               <br>
+               <p>Discover device in HomeAssistant</p>
+               <input type="submit" value="Discover"><br><br>
+            </form>
+         </div>
+         <div class="column">
+            <form action="/devConfig" method="post" class="fb border">
+               <br>
+               <h1>Device connection config</h1>
+               <p>Change device config if needed</p>
+               <label for="apSSID">AP SSID</label><br>
+               <input type="text" id="apSSID" name="apSSID" value=""><br><br>
+               <label for="apPwd">AP Password</label><br>
+               <input type="password" id="apPwd" name="apPwd" value="homeassistant"><br><br>
+               <input type="submit" value="Submit"><br><br>
+            </form>
+            <br>
+            <form action="/factoryReset" method="post" class="light_red">
+               <br>
+               <p><b>Factory reset</b> <br> (This action can't be undone)</p>
+               <input type="submit" value="Reset"><br><br>
+            </form>
+            <br>
+            <form action="/removeHA" method="post" class="light_red">
+               <br>
+               <p><b>Remove device from HomeAssistant</b> <br> (This action can't be undone)</p>
+               <input type="submit" value="Remove"><br><br>
+            </form>
+                        <br>
+            <form action="/removeHA" method="post" class="light_red">
+               <br>
+               <p><b>Remove device from HomeAssistant</b> <br> (This action can't be undone)</p>
+               <input type="submit" value="Remove"><br><br>
+            </form>
+                        <br>
+            <form action="/removeHA" method="post" class="light_red">
+               <br>
+               <p><b>Remove device from HomeAssistant</b> <br> (This action can't be undone)</p>
+               <input type="submit" value="Remove"><br><br>
+            </form>
+         </div>
+      </div>
+         </div>
+      <div class="footer">
+         <p>Pueblo&copy;2021  <a href="https://#">Github</a> </p>
+      </div>
+   </body>
+</html>
+
+
