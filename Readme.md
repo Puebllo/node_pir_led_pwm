@@ -37,7 +37,7 @@ TODOs:
 
 Prerequisites:
 - ESP8266 with atleast 1MB flash - Wemos D1 Lite / NodeMCU 1.0 / Bare ESP07 module
-	-consider module with external antenna, if Wi-Fi signal is weak in desired controller location
+  - consider module with external antenna, if Wi-Fi signal is weak in desired controller location
 - 12V Power Supply (Amps depending on used led strip)
 - PIR HC-SR501 (AM312 should also work but not tested)
 - 1x N-Mosfet IRLZ44N (IRF520N will also work)
@@ -90,15 +90,15 @@ Prerequisites:
 3. Open browser and type address: 192.168.1.1
 4. Controller Web UI should load. In "Device connection settings" fill SSID and password of your Wi-Fi network and click 'Submit'. Page should reload
 5. After reload click 'Reboot' button. Controller should now try to connect to given Wi-Fi network. Check in your router settings, what controllers IP address is.
- -You may also check assigned IP address in Serial ouptut
- -It may take a while for router to refresh. You also may check if network "NODE" is still available. If yes, then this means, that network were not found or wrong Wi-Fi credentials were given.
+   - You may also check assigned IP address in Serial ouptut
+   - It may take a while for router to refresh. You also may check if network "NODE" is still available. If yes, then this means, that network were not found or wrong Wi-Fi credentials were given.
 6. Congratulations, controller is ready to work :) 
 
 *MQTT setup and Home Assistant integration*
 1. Fill MQTT connection data, after submiting data, controller will automatically reboot and try to connect to MQTT Broker
-	-You may check if controller is connected to broker in Serial output
+   - You may check if controller is connected to broker in Serial output
 2. After reboot click 'Discover' button. Controller should appear on devices list in MQTT integration.
 3. To remove controller from Home Assistant MQTT intergration, click 'Remove' button
 
 ![](docs/mqtt_setup.png)
-![](docs/HA-discovey.png)
+![](docs/HA-discover.png)
