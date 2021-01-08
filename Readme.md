@@ -44,6 +44,7 @@ Prerequisites:
 - 1x 7805 / 78M05 - 5V voltage regulator
 - 1x 1117-3.3 - 3.3V volatage regulator
 - 1x LM358 - OP-Amp
+- Universal PCB (perfboard)
 - 2x 1k ohm resistor 
 - 1x 470 ohm resistor
 - 1x 300 ohm resistor 
@@ -79,14 +80,13 @@ Prerequisites:
 
 
 *Flashing firmware:*
-
 1. Clone this repo to PlatformIO and flash it to ESP8266 board
 2. Get binary from Releases and flash it using esptool:
  - `esptool.py --port <COM no> write_flash -fs 1MB -fm dout 0x0 <firmware_location>/firmware.bin`
 
 *Basic setup:*
 1. Until controller is not connected to Wi-Fi network, controller will be working in AP Mode
-2. Search for network "NODE", password is: "12345678"
+2. Search for network "NODE". Connect to it, using password: "12345678"
 3. Open browser and type address: 192.168.1.1
 4. Controller Web UI should load. In "Device connection settings" fill SSID and password of your Wi-Fi network and click 'Submit'. Page should reload
 5. After reload click 'Reboot' button. Controller should now try to connect to given Wi-Fi network. Check in your router settings, what controllers IP address is.
