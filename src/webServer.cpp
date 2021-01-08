@@ -11,6 +11,7 @@ String getParamValue(AsyncWebServerRequest *request, String paramName) {
         Serial.println(p->value());
         return p->value();
     }
+    return "";
 }
 
 void saveDeviceBehaviorDataToEEPROM(AsyncWebServerRequest *request) {
@@ -30,15 +31,6 @@ void saveDeviceBehaviorDataToEEPROM(AsyncWebServerRequest *request) {
     if (value.length() > 0) {
         fadeOutMs = value.toInt();
     }
-
-    /*    Serial.print("defBright");
-    Serial.println(defBrightnessPercent);
-    Serial.print("lightTime");
-    Serial.println(lightTimeSeconds);
-    Serial.print("fadeInTime");
-    Serial.println(fadeInMs);
-    Serial.print("fadeOutTime");
-    Serial.println(fadeOutMs); */
 
     saveToEEPROM();
 

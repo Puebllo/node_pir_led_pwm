@@ -6,6 +6,7 @@
 
 // IO
 #define EEPROM_SIZE 512
+#define SECOND_DEFINITION 1000
 
 extern const int ledPin;
 extern const int motionSensor;

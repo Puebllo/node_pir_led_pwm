@@ -26,23 +26,6 @@ void saveToEEPROM() {
 
     boolean ok = EEPROM.commit();
     Serial.println((ok) ? "Commit OK" : "Commit failed");
-
-    /*    delay(1000);
-    Serial.print("ap_ssid");
-    Serial.println(ap_ssid);
-    Serial.print("ap_password");
-    Serial.println(ap_password);
-
-    Serial.print("nodeName");
-    Serial.println(nodeNameBase);
-    Serial.print("mqttServer");
-    Serial.println(mqtt_server);
-    Serial.print("mqttPort");
-    Serial.println(mqtt_port);
-    Serial.print("mqttUser");
-    Serial.println(mqtt_user);
-    Serial.print("mqttPwd");
-    Serial.println(mqtt_pwd); */
 }
 
 void loadDataFromEEPROM() {
@@ -85,7 +68,17 @@ void loadDataFromEEPROM() {
         mqtt_user = root["0"].as<String>();
         mqtt_pwd = root["A"].as<String>();
 
-        /*         delay(1000);
+  /*       delay(1000);
+
+        Serial.print("defBright");
+        Serial.println(defBrightnessPercent);
+        Serial.print("lightTime");
+        Serial.println(lightTimeSeconds);
+        Serial.print("fadeInTime");
+        Serial.println(fadeInMs);
+        Serial.print("fadeOutTime");
+        Serial.println(fadeOutMs);
+
         Serial.print("ap_ssid");
         Serial.println(ap_ssid);
         Serial.print("ap_password");

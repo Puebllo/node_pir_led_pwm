@@ -107,7 +107,7 @@ void nodeActionLoop() {
     }
 
     // Turn off the LED after the number of seconds defined in the lightTimeSeconds variable
-    if (startTimer && (now - lastTrigger > (lightTimeSeconds * 1000))) {
+    if (startTimer && (now - lastTrigger > (lightTimeSeconds * SECOND_DEFINITION))) {
         if (digitalRead(motionSensor) == LOW) {
             Serial.println("Motion stopped...");
             startTimer = false;
