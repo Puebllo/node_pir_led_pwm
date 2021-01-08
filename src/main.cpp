@@ -1,181 +1,11 @@
-#include "variables.h"
-#include <ArduinoJson.h>
-#include <EEPROM.h>
-#include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <PubSubClient.h>
-
+#include "eepromUtils.h"
+#include "mqttUtils.h"
+#include "nodeActions.h"
 #include "views.cpp"
 
-#define EEPROM_SIZE 512
-
-const int led = 12;
-const int motionSensor = 14;
-
-int brightnessPWM = 0;
-int brightnessPercent = 0;
-
-unsigned long now = millis();
-unsigned long lastTrigger = 0;
-unsigned long lastReconnectAttempt = 0;
-unsigned long clientCheckIn = 0;
-
-boolean startTimer = false;
-
-WiFiClient espClient;
-PubSubClient client(espClient);
-
-String nodeName = "";
-String nodeMacAddress = "";
-int qos = 0;
-
-String motionConfigTopic = "";
-String lightConfigTopic = "";
-
-String motionStateTopic = "";
-String lightStateTopic = "";
-String lightCommandTopic = "";
-
 AsyncWebServer server(80);
-boolean shouldReboot = false;
-
-boolean mqttConnectToBroker() {
-    //   if (WiFi.status() != WL_CONNECTED){
-    //       Serial.println("WIFI DISCONNECTED !!!!");
-    //       setup_wifi();
-    //   }
-
-    Serial.print("Attempting MQTT connection...");
-    if (client.connect(nodeName.c_str(), mqtt_user.c_str(), mqtt_pwd.c_str())) {
-        Serial.println("connected");
-        client.subscribe(lightCommandTopic.c_str());
-        Serial.print("subscribing to: ");
-        Serial.println(lightCommandTopic.c_str());
-        return true;
-    } else {
-        Serial.print("failed, rc=");
-        Serial.print(client.state());
-        Serial.println(" try again in 5 seconds");
-        return false;
-    }
-    return false;
-}
-
-void publishMessage(const char *topic, String message) {
-    if (!client.connected()) {
-        mqttConnectToBroker();
-    }
-    client.publish(topic, message.c_str(), true);
-    Serial.print("Publishing to: ");
-    Serial.print(topic);
-    Serial.print(" message = ");
-    Serial.println(message);
-}
-
-void saveToEEPROM() {
-    StaticJsonDocument<EEPROM_SIZE> data;
-
-    data["1"] = defBrightnessPercent;
-    data["2"] = lightTimeSeconds;
-    data["3"] = fadeInMs;
-    data["4"] = fadeOutMs;
-    data["5"] = ap_ssid;
-    data["6"] = ap_password;
-    data["7"] = nodeNameBase;
-    data["8"] = mqtt_server;
-    data["9"] = mqtt_port;
-    data["0"] = mqtt_user;
-    data["A"] = mqtt_pwd;
-    data["B"] = 0;  // Factory reset; 0 - false, 1 - true
-    char dataAr[EEPROM_SIZE];
-    serializeJson(data, Serial);
-    delay(1000);
-    serializeJson(data, dataAr);
-
-    for (int i = 0; i < EEPROM_SIZE; i++) {
-        EEPROM.write(0x0F + i, dataAr[i]);
-    }
-
-    boolean ok = EEPROM.commit();
-    Serial.println((ok) ? "Commit OK" : "Commit failed");
-
-    /*    delay(1000);
-    Serial.print("ap_ssid");
-    Serial.println(ap_ssid);
-    Serial.print("ap_password");
-    Serial.println(ap_password);
-
-    Serial.print("nodeName");
-    Serial.println(nodeNameBase);
-    Serial.print("mqttServer");
-    Serial.println(mqtt_server);
-    Serial.print("mqttPort");
-    Serial.println(mqtt_port);
-    Serial.print("mqttUser");
-    Serial.println(mqtt_user);
-    Serial.print("mqttPwd");
-    Serial.println(mqtt_pwd); */
-}
-
-void loadDataFromEEPROM() {
-    String json;
-    for (int i = 0; i < EEPROM_SIZE; i++) {
-        json = json + char(EEPROM.read(0x0F + i));
-    }
-    Serial.println(json);
-
-    StaticJsonDocument<EEPROM_SIZE> root;
-
-    DeserializationError error = deserializeJson(root, json);
-
-    if (!error) {
-        Serial.println("loading data to variables");
-
-        int factoryResetInt = root["B"];
-        if (factoryResetInt == 1) {
-            factoryReset = true;
-            Serial.println("Factory reset requested !");
-        } else if (factoryResetInt == 0) {
-            factoryReset = false;
-        }
-
-        defBrightnessPercent = root["1"];
-        lightTimeSeconds = root["2"];
-        fadeInMs = root["3"];
-        fadeOutMs = root["4"];
-
-        ap_ssid = root["5"].as<String>();
-        ap_password = root["6"].as<String>();
-
-        if (!factoryReset) {
-            nodeNameBase = root["7"].as<String>();
-        }
-
-        mqtt_port = root["9"];
-
-        mqtt_server = root["8"].as<String>();
-        mqtt_user = root["0"].as<String>();
-        mqtt_pwd = root["A"].as<String>();
-
-        /*         delay(1000);
-        Serial.print("ap_ssid");
-        Serial.println(ap_ssid);
-        Serial.print("ap_password");
-        Serial.println(ap_password);
-
-        Serial.print("nodeName");
-        Serial.println(nodeNameBase);
-        Serial.print("mqttServer");
-        Serial.println(mqtt_server);
-        Serial.print("mqttPort");
-        Serial.println(mqtt_port);
-        Serial.print("mqttUser");
-        Serial.println(mqtt_user);
-        Serial.print("mqttPwd");
-        Serial.println(mqtt_pwd); */
-    }
-}
 
 String getParamValue(AsyncWebServerRequest *request, String paramName) {
     if (request->hasParam(paramName, true)) {
@@ -219,41 +49,13 @@ void saveDeviceBehaviorDataToEEPROM(AsyncWebServerRequest *request) {
     request->redirect("/");
 }
 
-String generateFullDeviceName() {
-    String mac = WiFi.macAddress();
-    mac.replace(":", "");
-    int len = mac.length();
-    Serial.print("Node name: ");
-    Serial.println(nodeName);
-
-    return nodeNameBase + "_" + mac.substring(len - 5, len);
-}
-
-void generateTopics() {
-    motionConfigTopic = "homeassistant/binary_sensor/" + nodeName + "/pir/config";
-    lightConfigTopic = "homeassistant/light/" + nodeName + "/config";
-
-    motionStateTopic = "homeassistant/binary_sensor/" + nodeName + "/pir";
-    lightStateTopic = "homeassistant/light/" + nodeName;
-    lightCommandTopic = "homeassistant/light/" + nodeName + "/set";
-
-    Serial.println("po przekonwertowaniu");
-    Serial.println(motionConfigTopic);
-    Serial.println(lightConfigTopic);
-    Serial.println(motionStateTopic);
-    Serial.println(lightStateTopic);
-    Serial.println(lightCommandTopic);
-
-    Serial.println("koniec po przekonwertowaniu");
-}
-
 void saveMQTTDataToEEPROM(AsyncWebServerRequest *request) {
     boolean mqttConfChanged = false;
     String value = getParamValue(request, "nodeName");
     if ((value.length() > 0) & (!value.equals(nodeNameBase))) {
         generateTopics();
         nodeNameBase = value.c_str();
-        nodeName = generateFullDeviceName();
+        generateFullDeviceName(nodeNameBase);
     }
 
     value = getParamValue(request, "mqttServer");
@@ -304,102 +106,10 @@ void saveDeviceAPDataToEEPROM(AsyncWebServerRequest *request) {
 }
 
 void doFactoryReset() {
-    StaticJsonDocument<EEPROM_SIZE> data;
-
-    data["1"] = 80;
-    data["2"] = 15;
-    data["3"] = 8;
-    data["4"] = 12;
-    data["5"] = "";
-    data["6"] = "";
-    data["7"] = "";
-    data["8"] = "";
-    data["9"] = "";
-    data["0"] = "";
-    data["A"] = "";
-    data["B"] = 1;
-
-    char dataAr[EEPROM_SIZE];
-
-    serializeJson(data, dataAr);
-
-    for (int i = 0; i < EEPROM_SIZE; i++) {
-        EEPROM.write(0x0F + i, dataAr[i]);
-    }
-
-    boolean ok = EEPROM.commit();
-    Serial.println((ok) ? "Commit OK" : "Commit failed");
+    clearEEPROM();
 
     delay(500);
     ESP.restart();
-}
-
-void removeDeviceFromHomeAssistant() {
-    publishMessage(motionConfigTopic.c_str(), "");
-    delay(500);
-    publishMessage(lightConfigTopic.c_str(), "");
-    delay(500);
-}
-
-void registerDeviceInHomeAssistant() {
-    //register motion
-    StaticJsonDocument<512> motionMsg;
-
-    motionMsg["name"] = nodeName;
-    motionMsg["device_class"] = "motion";
-    motionMsg["state_topic"] = motionStateTopic;
-    motionMsg["unique_id"] = nodeName + "-pir";
-    motionMsg["qos"] = qos;
-    motionMsg["value_template"] = "{{ value_json.motion }}";
-
-    JsonObject data = motionMsg.createNestedObject("device");
-
-    JsonArray identData = data.createNestedArray("identifiers");
-    identData.add(nodeMacAddress);
-
-    data["name"] = nodeName;
-    data["model"] = "Node-01";
-    data["manufacturer"] = "Pueblo";
-
-    char buffer_motion[512];
-
-    serializeJson(motionMsg, buffer_motion);
-
-    Serial.println(motionConfigTopic);
-    Serial.println(buffer_motion);
-
-    publishMessage(motionConfigTopic.c_str(), buffer_motion);
-    delay(500);
-
-    //register light
-    StaticJsonDocument<512> lightMsg;
-
-    lightMsg["name"] = nodeName + "-light";
-    lightMsg["platform"] = "mqtt";
-    lightMsg["state_topic"] = lightStateTopic;
-    lightMsg["command_topic"] = lightCommandTopic;
-    lightMsg["unique_id"] = nodeName + "-light";
-    lightMsg["brightness"] = true;
-    lightMsg["brightness_scale"] = 100;
-    lightMsg["color_temp"] = false;
-    lightMsg["schema"] = "json";
-    lightMsg["qos"] = qos;
-
-    JsonObject data1 = lightMsg.createNestedObject("device");
-
-    JsonArray identData1 = data1.createNestedArray("identifiers");
-    identData1.add(nodeMacAddress);
-
-    data1["name"] = nodeName;
-    data1["model"] = "Node-01";
-    data1["manufacturer"] = "Pueblo";
-
-    char buffer_light[512];
-
-    serializeJson(lightMsg, buffer_light);
-
-    publishMessage(lightConfigTopic.c_str(), buffer_light);
-    delay(500);
 }
 
 String processor(const String &var) {
@@ -562,114 +272,6 @@ void setup_wifi() {
     }
 }
 
-float mapDouble(double x, double in_min, double in_max, double out_min, double out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-void setBrightness(int percent) {
-    brightnessPercent = percent;
-    brightnessPWM = mapDouble(percent, 0, 100, 0, 1024);
-}
-
-void fadeIn(int ledPin, int brightnessPecent) {
-    for (int i = 0; i <= brightnessPecent; i++) {
-        int step = mapDouble(i, 0, 100, 0, 1024);
-        analogWrite(ledPin, step);
-        delay(fadeInMs);
-    }
-}
-
-void fadeOut(int ledPin, int brightnessPecent) {
-    for (int i = brightnessPecent; i >= 0; i--) {
-        int step = mapDouble(i, 0, 100, 0, 1024);
-        analogWrite(ledPin, step);
-        delay(fadeOutMs);
-    }
-}
-
-void publishLightState(String incomingLightState) {
-    StaticJsonDocument<64> lightMsg;
-
-    lightMsg["brightness"] = brightnessPercent;
-
-    String outState = "OFF";
-    if ((digitalRead(motionSensor) == HIGH) || (incomingLightState == "ON")) {
-        outState = "ON";
-    }
-
-    lightMsg["state"] = outState;
-
-    char buffer_light[64];
-
-    serializeJson(lightMsg, buffer_light);
-    publishMessage(lightStateTopic.c_str(), buffer_light);
-}
-
-void callback(char *topic, byte *message, unsigned int length) {
-    Serial.print("Message arrived on topic: ");
-    Serial.print(topic);
-    Serial.print(". Message: ");
-    String messageTemp;
-
-    for (int i = 0; i < length; i++) {
-        messageTemp += (char)message[i];
-    }
-    Serial.println(messageTemp);
-
-    if (String(topic) == lightCommandTopic) {
-        StaticJsonDocument<64> root;
-
-        DeserializationError error = deserializeJson(root, messageTemp);
-
-        if (!error) {
-            int brightness = brightnessPercent;
-            if (root.containsKey("brightness")) {
-                brightness = root["brightness"];
-            }
-            String outState = root["state"];
-
-            setBrightness(brightness);
-
-            if (outState == "ON") {
-                fadeIn(led, brightnessPercent);
-            } else if (outState == "OFF") {
-                fadeOut(led, brightnessPercent);
-            }
-
-            publishLightState(outState);
-        }
-    }
-}
-
-void mqttUtilsInit(WiFiClient espClient, String nodeNamee, String nodeMac) {
-    nodeMacAddress = nodeMac;
-    nodeName = nodeNamee;
-
-    generateTopics();
-
-    client.setBufferSize(512);
-    client.setServer(mqtt_server.c_str(), mqtt_port);
-    client.setCallback(callback);
-}
-
-void publishMotion(boolean motionDetected) {
-    StaticJsonDocument<32> motionMsg;
-    String msg = "OFF";
-
-    if (motionDetected) {
-        msg = "ON";
-    }
-
-    motionMsg["motion"] = msg;
-
-    char bufferMotion[32];
-
-    serializeJson(motionMsg, bufferMotion);
-
-    publishMessage(motionStateTopic.c_str(), bufferMotion);
-    publishLightState(msg);
-}
-
 void setup() {
     Serial.begin(115200);
     EEPROM.begin(EEPROM_SIZE);
@@ -677,13 +279,12 @@ void setup() {
     loadDataFromEEPROM();
 
     pinMode(motionSensor, INPUT_PULLDOWN_16);
-    pinMode(led, OUTPUT);
+    pinMode(ledPin, OUTPUT);
 
     setBrightness(defBrightnessPercent);
-    nodeName = generateFullDeviceName();
 
     setup_wifi();
-    mqttUtilsInit(espClient, nodeName, WiFi.macAddress());
+    mqttUtilsInit(WiFi.macAddress());
 
     if (WiFi.status() == WL_CONNECTED) {
         mqttConnectToBroker();
@@ -693,45 +294,6 @@ void setup() {
 }
 
 void loop() {
-    // Current time
-    long now = millis();
-    client.loop();
-    if (!client.connected() && lastReconnectAttempt == 0) {
-        Serial.println("Disconnected from mqtt broker");
-        lastReconnectAttempt = now;
-    }
-
-    if (!startTimer && digitalRead(motionSensor) == HIGH) {
-        Serial.println("MOTION DETECTED!!!");
-        startTimer = true;
-        lastTrigger = millis();
-        publishMotion(true);
-        fadeIn(led, brightnessPercent);
-    }
-
-    // Turn off the LED after the number of seconds defined in the lightTimeSeconds variable
-    if (startTimer && (now - lastTrigger > (lightTimeSeconds * 1000))) {
-        if (digitalRead(motionSensor) == LOW) {
-            Serial.println("Motion stopped...");
-            startTimer = false;
-            publishMotion(false);
-            fadeOut(led, brightnessPercent);
-        } else {
-            Serial.println("Still motion. Adding 10 more seconds");
-
-            lastTrigger = millis();
-        }
-    }
-
-    if (lastReconnectAttempt != 0 && (now - lastReconnectAttempt >= 30000)) {
-        if (mqttConnectToBroker()) {
-            lastReconnectAttempt = 0;
-        } else {
-            lastReconnectAttempt = now;
-        }
-    }
-    if (shouldReboot) {
-        delay(300);
-        ESP.restart();
-    }
+    nodeActionLoop();
+    handleClientLoop();
 }
