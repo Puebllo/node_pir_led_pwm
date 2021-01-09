@@ -29,8 +29,9 @@ Features:
 TODOs:
  1. [ ] Reconnect when Wi-Fi network is back + Add option 'Reconnect' to WebUI
  2. [ ] Home Assistant - broadcast controller status after rebooting Home Assistant
- 3. [ ] Refactoring main.cpp - splitting to smaller / more readable/ maintainable chunks
- 4. [ ] Add controllers logging to Web UI
+ 3. [ ] Broadcast controller status after boot
+ 4. [ ] Refactoring main.cpp - splitting to smaller / more readable/ maintainable chunks
+ 5. [ ] Add controllers logging to Web UI
 
 
 **If you like this project, give it a _star_, or fork it and contribute!**
