@@ -94,7 +94,7 @@ const char index_html[] PROGMEM =  R"(
                <h1>MQTT Settings</h1>
                <p>Set mqtt parameters</p>
                <label for="nodeName">Node name</label><br>
-               <input type="text" id="nodeName" name="nodeName" value="%NODE_NAME%"><br><br>
+               <input type="text" id="nodeName" name="nodeName" maxlength = "20" value="%NODE_NAME%"><br><br>
                <label for="mqttServer">MQTT Server</label><br>
                <input type="text" id="mqttServer" name="mqttServer" value="%MQTT_SERVER%"><br><br>
                <label for="mqttPort">MQTT Port</label><br>

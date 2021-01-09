@@ -23,5 +23,6 @@ String generateFullDeviceName(String nodeNameBase);
 void mqttUtilsInit(String nodeMac);
 void publishLightState(String incomingLightState);
 void handleClientLoop();
+void setupWifi();
 
 #endif

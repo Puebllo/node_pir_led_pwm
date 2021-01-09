@@ -22,12 +22,59 @@ int qos = 0;
 
 unsigned long lastReconnectAttempt = 0;
 
+void setupWifi() {
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    delay(1000);
+    boolean problemWithConnection = false;
+
+    if (ap_ssid.length() > 0 && ap_password.length() > 0) {
+        delay(10);
+        Serial.println();
+        Serial.print("Connecting to ");
+        Serial.println(ap_ssid);
+
+        WiFi.setSleepMode(WIFI_NONE_SLEEP);
+
+        WiFi.begin(ap_ssid, ap_password);
+
+        int attempt = 1;
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(500);
+            Serial.print(".");
+            if (attempt == 60) {
+                problemWithConnection = true;
+                break;
+            }
+            attempt++;
+        }
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.println("");
+            Serial.println("WiFi connected");
+            Serial.println("IP address: ");
+            Serial.println(WiFi.localIP());
+        }
+    } else {
+        problemWithConnection = true;
+    }
+
+    if (problemWithConnection) {
+        Serial.println("Setting node in AP mode");
+        IPAddress localIp(192, 168, 1, 1);
+        IPAddress gateway(192, 168, 1, 1);
+        IPAddress subnet(255, 255, 255, 0);
+
+        WiFi.softAP("NODE", "12345678");
+        WiFi.softAPConfig(localIp, gateway, subnet);
+    }
+}
 
 boolean mqttConnectToBroker() {
-    //   if (WiFi.status() != WL_CONNECTED){
-    //       Serial.println("WIFI DISCONNECTED !!!!");
-    //       setup_wifi();
-    //   }
+      if (WiFi.status() != WL_CONNECTED){
+          Serial.println("WIFI DISCONNECTED !!!!");
+          setupWifi();
+      }
 
     Serial.print("Attempting MQTT connection...");
     if (client.connect(nodeName.c_str(), mqtt_user.c_str(), mqtt_pwd.c_str())) {
@@ -46,9 +93,9 @@ boolean mqttConnectToBroker() {
 }
 
 void publishMessage(const char *topic, String message) {
-    if (!client.connected()) {
-        mqttConnectToBroker();
-    }
+    // if (!client.connected()) {
+    //     mqttConnectToBroker();
+    // }
     client.publish(topic, message.c_str(), true);
     Serial.print("Publishing to: ");
     Serial.print(topic);
@@ -76,9 +123,9 @@ void generateTopics() {
 
 void removeDeviceFromHomeAssistant() {
     publishMessage(motionConfigTopic.c_str(), "");
-    delay(500);
+    delay(1000);
     publishMessage(lightConfigTopic.c_str(), "");
-    delay(500);
+    delay(1000);
 }
 
 void registerDeviceInHomeAssistant() {
@@ -104,12 +151,10 @@ void registerDeviceInHomeAssistant() {
     char buffer_motion[512];
 
     serializeJson(motionMsg, buffer_motion);
-
-    Serial.println(motionConfigTopic);
-    Serial.println(buffer_motion);
+    //delay(500);
 
     publishMessage(motionConfigTopic.c_str(), buffer_motion);
-    delay(500);
+   // delay(500);
 
     //register light
     StaticJsonDocument<512> lightMsg;
@@ -137,13 +182,11 @@ void registerDeviceInHomeAssistant() {
     char buffer_light[512];
 
     serializeJson(lightMsg, buffer_light);
+   // delay(500);
 
     publishMessage(lightConfigTopic.c_str(), buffer_light);
-    delay(500);
+    //delay(500);
 }
-
-
-
 
 void callback(char *topic, byte *message, unsigned int length) {
     Serial.print("Message arrived on topic: ");
@@ -155,10 +198,9 @@ void callback(char *topic, byte *message, unsigned int length) {
         messageStr += (char)message[i];
     }
     Serial.println(messageStr);
-    
+
     callbackAction(topic, messageStr);
 }
-
 
 String generateFullDeviceName(String nodeNameBase) {
     String mac = WiFi.macAddress();
@@ -182,18 +224,20 @@ void mqttUtilsInit(String nodeMac) {
     client.setCallback(callback);
 }
 
-void handleClientLoop(){
-        client.loop();
-          if (!client.connected() && lastReconnectAttempt == 0) {
+void handleClientLoop() {
+    if (client.connected()){
+    client.loop();
+    }
+    if (!client.connected() && lastReconnectAttempt == 0) {
         Serial.println("Disconnected from mqtt broker");
         lastReconnectAttempt = now;
-    } 
+    }
 
-     if (lastReconnectAttempt != 0 && (now - lastReconnectAttempt >= 30000)) {
+    if (lastReconnectAttempt != 0 && (now - lastReconnectAttempt >= 30000)) {
         if (mqttConnectToBroker()) {
             lastReconnectAttempt = 0;
         } else {
             lastReconnectAttempt = now;
         }
-    } 
+    }
 }
