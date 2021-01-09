@@ -71,10 +71,10 @@ void setupWifi() {
 }
 
 boolean mqttConnectToBroker() {
-      if (WiFi.status() != WL_CONNECTED){
-          Serial.println("WIFI DISCONNECTED !!!!");
-          setupWifi();
-      }
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("WIFI DISCONNECTED !!!!");
+        setupWifi();
+    }
 
     Serial.print("Attempting MQTT connection...");
     if (client.connect(nodeName.c_str(), mqtt_user.c_str(), mqtt_pwd.c_str())) {
@@ -154,7 +154,7 @@ void registerDeviceInHomeAssistant() {
     //delay(500);
 
     publishMessage(motionConfigTopic.c_str(), buffer_motion);
-   // delay(500);
+    // delay(500);
 
     //register light
     StaticJsonDocument<512> lightMsg;
@@ -182,7 +182,7 @@ void registerDeviceInHomeAssistant() {
     char buffer_light[512];
 
     serializeJson(lightMsg, buffer_light);
-   // delay(500);
+    // delay(500);
 
     publishMessage(lightConfigTopic.c_str(), buffer_light);
     //delay(500);
@@ -225,8 +225,8 @@ void mqttUtilsInit(String nodeMac) {
 }
 
 void handleClientLoop() {
-    if (client.connected()){
-    client.loop();
+    if (client.connected()) {
+        client.loop();
     }
     if (!client.connected() && lastReconnectAttempt == 0) {
         Serial.println("Disconnected from mqtt broker");
