@@ -1,6 +1,0 @@
-#clear entire flash
-esptool.py --port /dev/ttyUSB3 write_flash -fs 1MB -fm dout 0x0 /home/pueblo/Downloads/tasmota.bin
-
-esptool.py --port /dev/ttyUSB3 write_flash 0x00000 blank_1MB.bin 0x10000 blank_1MB.bin 0x20000 blank_1MB.bin 0x30000 blank_1MB.bin
-
- pio device monitor -f esp8266_exception_decoder
