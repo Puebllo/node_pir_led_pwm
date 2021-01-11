@@ -30,7 +30,7 @@ TODOs:
  1. [ ] Reconnect when Wi-Fi network is back + Add option 'Reconnect' to WebUI
  2. [ ] Home Assistant - broadcast controller status after rebooting Home Assistant
  3. [ ] Broadcast controller status after boot
- 4. [ ] Refactoring main.cpp - splitting to smaller / more readable/ maintainable chunks
+ 4. [X] ~~Refactoring main.cpp - splitting to smaller / more readable/ maintainable chunks~~
  5. [ ] Add controllers logging to Web UI
 
 
