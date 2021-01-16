@@ -27,8 +27,8 @@ Features:
 5. AP mode for basic setup and failsafe scenario - when Wi-Fi network not available
 
 TODOs:
- 1. [ ] Reconnect when Wi-Fi network is back + Add option 'Reconnect' to WebUI
- 2. [ ] Add possibility to connect to second AP
+ 1. [x] ~~Reconnect when Wi-Fi network is back + Add option 'Reconnect' to WebUI~~
+ 2. [x] ~~Add possibility to connect to second AP~~
  3. [ ] Home Assistant - broadcast controller status after rebooting Home Assistant
  4. [ ] Broadcast controller status after boot
  5. [X] ~~Refactoring main.cpp - splitting to smaller / more readable/ maintainable chunks~~
