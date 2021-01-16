@@ -22,80 +22,110 @@ int qos = 0;
 
 unsigned long lastReconnectAttempt = 0;
 
-void setupWifi() {
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    delay(1000);
-    boolean problemWithConnection = false;
+boolean apStarted = false;
 
-    if (ap_ssid.length() > 0 && ap_password.length() > 0) {
+boolean setupWifiInner(String ssid, String pwd) {
+    boolean toReturn = true;
+    if (ssid.length() > 0 && pwd.length() > 0) {
         delay(10);
         Serial.println();
         Serial.print("Connecting to ");
-        Serial.println(ap_ssid);
-
+        Serial.print(ssid);
         WiFi.setSleepMode(WIFI_NONE_SLEEP);
 
-        WiFi.begin(ap_ssid, ap_password);
+        WiFi.begin(ssid, pwd);
 
         int attempt = 1;
         while (WiFi.status() != WL_CONNECTED) {
             delay(500);
             Serial.print(".");
-            if (attempt == 60) {
-                problemWithConnection = true;
+            if (attempt == 20) {
+                toReturn = false;
                 break;
             }
             attempt++;
         }
-
         if (WiFi.status() == WL_CONNECTED) {
             Serial.println("");
             Serial.println("WiFi connected");
             Serial.println("IP address: ");
             Serial.println(WiFi.localIP());
+        } else {
+            Serial.print("Connection to: ");
+            Serial.print(ssid);
+            Serial.println(" failed !");
+        }
+    }
+    return toReturn;
+}
+
+boolean setupWifi() {
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    delay(1000);
+    boolean isConnected = false;
+    if (ap_ssid.length() > 0 && ap_password.length() > 0) {
+        //Try to connect to first AP
+        isConnected = setupWifiInner(ap_ssid, ap_password);
+
+        //Try to connect to second AP if configured
+        if (!isConnected && ap_ssid_2.length() > 0 && ap_password_2.length() > 0) {
+            isConnected = setupWifiInner(ap_ssid_2, ap_password_2);
+        }
+    }
+
+    //If connection to Wifi failed, then set node in AP mode
+    if (!isConnected) {
+        now = millis();
+        apModeStartTime = now;
+        if (!apStarted) {
+            WiFi.disconnect();
+            delay(1000);
+
+            apStarted = true;
+
+            Serial.println("Setting node in AP mode");
+            IPAddress localIp(192, 168, 1, 1);
+            IPAddress gateway(192, 168, 1, 1);
+            IPAddress subnet(255, 255, 255, 0);
+
+            WiFi.softAP("NODE", "12345678");
+            WiFi.softAPConfig(localIp, gateway, subnet);
         }
     } else {
-        problemWithConnection = true;
+        apModeStartTime = 0;
+        apStarted = false;
     }
 
-    if (problemWithConnection) {
-        Serial.println("Setting node in AP mode");
-        IPAddress localIp(192, 168, 1, 1);
-        IPAddress gateway(192, 168, 1, 1);
-        IPAddress subnet(255, 255, 255, 0);
-
-        WiFi.softAP("NODE", "12345678");
-        WiFi.softAPConfig(localIp, gateway, subnet);
-    }
+    return isConnected;
 }
 
 boolean mqttConnectToBroker() {
-      if (WiFi.status() != WL_CONNECTED){
-          Serial.println("WIFI DISCONNECTED !!!!");
-          setupWifi();
-      }
-
-    Serial.print("Attempting MQTT connection...");
-    if (client.connect(nodeName.c_str(), mqtt_user.c_str(), mqtt_pwd.c_str())) {
-        Serial.println("connected");
-        client.subscribe(lightCommandTopic.c_str());
-        Serial.print("subscribing to: ");
-        Serial.println(lightCommandTopic.c_str());
-        return true;
-    } else {
-        Serial.print("failed, rc=");
-        Serial.print(client.state());
-        Serial.println(" try again in 5 seconds");
-        return false;
+    if (apModeStartTime == 0 && (WiFi.status() != WL_CONNECTED || WiFi.localIP().toString().length() < 6)) {
+        setupWifi();
     }
+    if (mqttCredsConfigured && WiFi.status() == WL_CONNECTED) {
+        Serial.print("Attempting MQTT connection...");
+        if (client.connect(nodeName.c_str(), mqtt_user.c_str(), mqtt_pwd.c_str())) {
+            Serial.println("connected");
+            client.subscribe(lightCommandTopic.c_str());
+            Serial.print("subscribing to: ");
+            Serial.println(lightCommandTopic.c_str());
+            return true;
+        } else {
+            Serial.print("failed, rc=");
+            Serial.print(client.state());
+            Serial.print(" try again in ");
+            Serial.print(MQTT_BROKER_RECONNECT_TIME_IN_MS);
+            Serial.print(" ms");
+            return false;
+        }
+    }
+
     return false;
 }
 
 void publishMessage(const char *topic, String message) {
-    // if (!client.connected()) {
-    //     mqttConnectToBroker();
-    // }
     client.publish(topic, message.c_str(), true);
     Serial.print("Publishing to: ");
     Serial.print(topic);
@@ -110,15 +140,6 @@ void generateTopics() {
     motionStateTopic = "homeassistant/binary_sensor/" + nodeName + "/pir";
     lightStateTopic = "homeassistant/light/" + nodeName;
     lightCommandTopic = "homeassistant/light/" + nodeName + "/set";
-
-    Serial.println("po przekonwertowaniu");
-    Serial.println(motionConfigTopic);
-    Serial.println(lightConfigTopic);
-    Serial.println(motionStateTopic);
-    Serial.println(lightStateTopic);
-    Serial.println(lightCommandTopic);
-
-    Serial.println("koniec po przekonwertowaniu");
 }
 
 void removeDeviceFromHomeAssistant() {
@@ -151,10 +172,8 @@ void registerDeviceInHomeAssistant() {
     char buffer_motion[512];
 
     serializeJson(motionMsg, buffer_motion);
-    //delay(500);
 
     publishMessage(motionConfigTopic.c_str(), buffer_motion);
-   // delay(500);
 
     //register light
     StaticJsonDocument<512> lightMsg;
@@ -182,10 +201,8 @@ void registerDeviceInHomeAssistant() {
     char buffer_light[512];
 
     serializeJson(lightMsg, buffer_light);
-   // delay(500);
 
     publishMessage(lightConfigTopic.c_str(), buffer_light);
-    //delay(500);
 }
 
 void callback(char *topic, byte *message, unsigned int length) {
@@ -225,15 +242,30 @@ void mqttUtilsInit(String nodeMac) {
 }
 
 void handleClientLoop() {
-    if (client.connected()){
-    client.loop();
+    now = millis();
+    if (client.connected()) {
+        client.loop();
     }
-    if (!client.connected() && lastReconnectAttempt == 0) {
+    if (mqttCredsConfigured && !client.connected() && lastReconnectAttempt == 0) {
         Serial.println("Disconnected from mqtt broker");
         lastReconnectAttempt = now;
     }
+    if (WiFi.localIP().toString().length() < 6 || (apModeStartTime == 0 && WiFi.status() != WL_CONNECTED)) {
+        Serial.println("Disconnected from Wi-Fi AP");
+        apModeStartTime = now;
+    }
 
-    if (lastReconnectAttempt != 0 && (now - lastReconnectAttempt >= 30000)) {
+    //Try to connect after set time amount
+    if (apModeStartTime != 0 && ((now - apModeStartTime) > WIFI_RECONNECT_TIME_IN_MS)) {
+        if (setupWifi()) {
+            apModeStartTime = 0;
+        } else {
+            apModeStartTime = now;
+        }
+    }
+
+    //Try to connect to mqtt broker
+    if (lastReconnectAttempt != 0 && ((now - lastReconnectAttempt) > MQTT_BROKER_RECONNECT_TIME_IN_MS)) {
         if (mqttConnectToBroker()) {
             lastReconnectAttempt = 0;
         } else {

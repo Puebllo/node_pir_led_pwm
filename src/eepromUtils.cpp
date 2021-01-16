@@ -9,12 +9,14 @@ void saveToEEPROM() {
     data["4"] = fadeOutMs;
     data["5"] = ap_ssid;
     data["6"] = ap_password;
-    data["7"] = nodeNameBase;
-    data["8"] = mqtt_server;
-    data["9"] = mqtt_port;
-    data["0"] = mqtt_user;
-    data["A"] = mqtt_pwd;
-    data["B"] = 0;  // Factory reset; 0 - false, 1 - true
+    data["7"] = ap_ssid_2;
+    data["8"] = ap_password_2;
+    data["9"] = nodeNameBase;
+    data["0"] = mqtt_server;
+    data["A"] = mqtt_port;
+    data["B"] = mqtt_user;
+    data["C"] = mqtt_pwd;
+    data["D"] = 0;  // Factory reset; 0 - false, 1 - true
     char dataAr[EEPROM_SIZE];
     serializeJson(data, Serial);
     delay(1000);
@@ -42,7 +44,7 @@ void loadDataFromEEPROM() {
     if (!error) {
         Serial.println("loading data to variables");
 
-        int factoryResetInt = root["B"];
+        int factoryResetInt = root["D"];
         if (factoryResetInt == 1) {
             factoryReset = true;
             Serial.println("Factory reset requested !");
@@ -58,17 +60,25 @@ void loadDataFromEEPROM() {
         ap_ssid = root["5"].as<String>();
         ap_password = root["6"].as<String>();
 
+        ap_ssid_2 = root["7"].as<String>();
+        ap_password_2 = root["8"].as<String>();
+
         if (!factoryReset) {
-            nodeNameBase = root["7"].as<String>();
+            nodeNameBase = root["9"].as<String>();
         }
 
-        mqtt_port = root["9"];
+        mqtt_port = root["A"];
 
-        mqtt_server = root["8"].as<String>();
-        mqtt_user = root["0"].as<String>();
-        mqtt_pwd = root["A"].as<String>();
+        mqtt_server = root["0"].as<String>();
+        mqtt_user = root["B"].as<String>();
+        mqtt_pwd = root["C"].as<String>();
 
-  /*       delay(1000);
+        mqttCredsConfigured = true;
+        if (mqtt_server.length() == 0 || mqtt_port == 0 || mqtt_user.length() == 0 || mqtt_pwd.length() == 0) {
+            mqttCredsConfigured = false;
+        }
+
+        /*       delay(1000);
 
         Serial.print("defBright");
         Serial.println(defBrightnessPercent);
@@ -111,7 +121,9 @@ void clearEEPROM() {
     data["9"] = "";
     data["0"] = "";
     data["A"] = "";
-    data["B"] = 1;
+    data["B"] = "";
+    data["C"] = "";
+    data["D"] = 1;
 
     char dataAr[EEPROM_SIZE];
 
