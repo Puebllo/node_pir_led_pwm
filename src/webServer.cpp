@@ -2,7 +2,6 @@
 
 AsyncWebServer server(80);
 
-
 String getParamValue(AsyncWebServerRequest *request, String paramName) {
     if (request->hasParam(paramName, true)) {
         AsyncWebParameter *p = request->getParam(paramName, true);
@@ -78,17 +77,41 @@ void saveMQTTDataToEEPROM(AsyncWebServerRequest *request) {
 }
 
 void saveDeviceAPDataToEEPROM(AsyncWebServerRequest *request) {
+    boolean doSave = false;
     String value = getParamValue(request, "apSSID");
     if (value.length() > 0) {
+        if (!value.equals(ap_ssid)) {
+            doSave = true;
+        }
         ap_ssid = value;
     }
-
     value = getParamValue(request, "apPwd");
     if (value.length() > 0) {
+        if (!value.equals(ap_password)) {
+            doSave = true;
+        }
         ap_password = value;
+        doSave = true;
     }
 
-    saveToEEPROM();
+    value = getParamValue(request, "apSSID2");
+    if (value.length() > 0) {
+        if (!value.equals(ap_ssid_2)) {
+            doSave = true;
+        }
+        ap_ssid_2 = value;
+    }
+
+    value = getParamValue(request, "apPwd2");
+    if (value.length() > 0) {
+        if (!value.equals(ap_password_2)) {
+            doSave = true;
+        }
+        ap_password_2 = value;
+    }
+    if (doSave) {
+        saveToEEPROM();
+    }
 
     request->redirect("/");
 }
@@ -133,6 +156,9 @@ String processor(const String &var) {
     }
     if (var == "AP_SSID") {
         return ap_ssid;
+    }
+    if (var == "AP_SSID2") {
+        return ap_ssid_2;
     }
 
     return String();
@@ -194,17 +220,24 @@ void startServer() {
 
     server.on("/discoverHA", HTTP_POST, [](AsyncWebServerRequest *request) {
         request->redirect("/");
-
         registerDeviceInHomeAssistant();
     });
+
     server.on("/removeHA", HTTP_POST, [](AsyncWebServerRequest *request) {
         removeDeviceFromHomeAssistant();
         request->redirect("/");
     });
+
     server.on("/reboot", HTTP_POST, [](AsyncWebServerRequest *request) {
         ESP.restart();
         request->redirect("/");
     });
+
+    server.on("/reconnectAP", HTTP_POST, [](AsyncWebServerRequest *request) {
+        setupWifi();
+        request->redirect("/");
+    });
+    
     otaUpdate();
     Serial.println("Registered endpoints");
     server.begin();

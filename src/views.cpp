@@ -118,11 +118,20 @@ const char index_html[] PROGMEM =  R"(
                <p>Change device config if needed</p>
                <p>MAC Address: <b>%MAC%</b></p>
                <p>IP Address: <b>%IP%</b></p>
-               <label for="apSSID">AP SSID</label><br>
+               <label for="apSSID">1. AP SSID</label><br>
                <input type="text" id="apSSID" name="apSSID" value="%AP_SSID%"><br><br>
-               <label for="apPwd">AP Password</label><br>
+               <label for="apPwd">1. AP Password</label><br>
                <input type="password" id="apPwd" name="apPwd"><br><br>
+               <label for="apSSID2">2. AP SSID</label><br>
+               <input type="text" id="apSSID2" name="apSSID2" placeholder="Optional" value="%AP_SSID2%"><br><br>
+               <label for="apPwd2">2. AP Password</label><br>
+               <input type="password" id="apPwd2" name="apPwd2"><br><br>
                <input type="submit" value="Submit"><br><br>
+            </form>
+            <br>
+               <form action="/reconnectAP" method="post" class="fb border">
+               <p>Reconnect to AP</p>
+               <input type="submit" value="Reconnect"><br><br>
             </form>
             <br>
             <form action="/factoryReset" method="post" class="light_red">
