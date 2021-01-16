@@ -5,7 +5,7 @@
 unsigned long lastTrigger = 0;
 unsigned long clientCheckIn = 0;
 
-boolean startTimer = false;
+boolean motionDetected = false;
 boolean shouldReboot = false;
 
 float mapDouble(double x, double in_min, double in_max, double out_min, double out_max) {
@@ -39,7 +39,7 @@ void publishLightState(String incomingLightState) {
     lightMsg["brightness"] = brightnessPercent;
 
     String outState = "OFF";
-    if ((digitalRead(motionSensor) == HIGH) || (incomingLightState == "ON")) {
+    if (motionDetected || incomingLightState.equals("ON")){
         outState = "ON";
     }
 
@@ -92,35 +92,28 @@ void publishMotion(boolean motionDetected) {
     serializeJson(motionMsg, bufferMotion);
 
     publishMessage(motionStateTopic.c_str(), bufferMotion);
-    publishLightState(msg);
+    publishLightState("");
 }
 
 void nodeActionLoop() {
-    long now = millis();
-
-    if (!startTimer && digitalRead(motionSensor) == HIGH) {
+    if (!motionDetected && digitalRead(motionSensor) == HIGH) {
         Serial.println("MOTION DETECTED!!!");
-        startTimer = true;
+        motionDetected = true;
         lastTrigger = millis();
-        publishMotion(true);
+        publishMotion(motionDetected);
         fadeIn(brightnessPercent);
     }
 
     // Turn off the LED after the number of seconds defined in the lightTimeSeconds variable
-    if (startTimer && (now - lastTrigger > (lightTimeSeconds * SECOND_DEFINITION))) {
+    if (motionDetected && (now - lastTrigger > (lightTimeSeconds * SECOND_DEFINITION))) {
         if (digitalRead(motionSensor) == LOW) {
             Serial.println("Motion stopped...");
-            startTimer = false;
-            publishMotion(false);
+            motionDetected = false;
+            publishMotion(motionDetected);
             fadeOut(brightnessPercent);
         } else {
             Serial.println("Still motion. Adding 10 more seconds");
             lastTrigger = millis();
         }
-    }
-
-    if (shouldReboot) {
-        delay(300);
-        ESP.restart();
     }
 }

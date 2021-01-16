@@ -8,11 +8,15 @@
 #define EEPROM_SIZE 512
 #define SECOND_DEFINITION 1000
 
+//TIMEOUTS
+#define WIFI_RECONNECT_TIME_IN_MS 600000
+#define MQTT_BROKER_RECONNECT_TIME_IN_MS 300000
+
 extern const int ledPin;
 extern const int motionSensor;
 
 extern unsigned long now;
-
+extern unsigned long apModeStartTime;
 
 extern int defBrightnessPercent;
 extern int lightTimeSeconds;
@@ -21,6 +25,9 @@ extern int fadeOutMs;
 
 extern String ap_ssid;
 extern String ap_password;
+
+extern String ap_ssid_2;
+extern String ap_password_2;
 
 extern String nodeNameBase;
 extern String mqtt_server;
@@ -33,6 +40,7 @@ extern boolean factoryReset;
 extern int brightnessPWM;
 extern int brightnessPercent;
 
+extern boolean mqttCredsConfigured;
 
 
 #endif

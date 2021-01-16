@@ -13,12 +13,14 @@ void setup() {
     pinMode(ledPin, OUTPUT);
 
     setBrightness(defBrightnessPercent);
-
+    WiFi.disconnect();
     setupWifi();
     mqttUtilsInit(WiFi.macAddress());
 
     if (WiFi.status() == WL_CONNECTED) {
-        mqttConnectToBroker();
+        if (mqttConnectToBroker()){
+            publishLightState("");
+        }
     }
 
     startServer();
@@ -27,4 +29,9 @@ void setup() {
 void loop() {
     nodeActionLoop();
     handleClientLoop();
+
+    if (shouldReboot) {
+        delay(300);
+        ESP.restart();
+    }
 }
