@@ -22,9 +22,13 @@ Features:
 	 - Exposes light entity for switching and brightness control
 	 - Discovery by Home Assistant from Web UI level
 	 - Removing device from Home Assistant from Web UI level
+	 - Not blocking, automatic reconnect to MQTT broker, after loosing connection (after 5 minutes by default)
 3. Works standalone without Home Assistant
 4. OTA Updates from Web UI level
-5. AP mode for basic setup and failsafe scenario - when Wi-Fi network not available
+5. Contorller AP mode for basic setup and failsafe scenario - when Wi-Fi AP not available or Wi-Fi AP credentials are invalid, controller gives option to fix config
+	- Controller have possibility to configure 2 Wi-Fi AP's - when 1. AP is not available, then controller connetects to 2. AP
+	- WebUI button for reconnect to Wi-Fi AP
+	- Not blocking, automatic reconnect to Wi-Fi AP, after loosing connection (after 10 minutes by default)
 
 TODOs:
  1. [x] ~~Reconnect when Wi-Fi network is back + Add option 'Reconnect' to WebUI~~
