@@ -39,7 +39,7 @@ void publishLightState(String incomingLightState) {
     lightMsg["brightness"] = brightnessPercent;
 
     String outState = "OFF";
-    if (motionDetected || incomingLightState.equals("ON")){
+    if (motionDetected || incomingLightState.equals("ON")) {
         outState = "ON";
     }
 
@@ -51,8 +51,8 @@ void publishLightState(String incomingLightState) {
     publishMessage(lightStateTopic.c_str(), buffer_light);
 }
 
-void callbackAction(char* topic, String messageStr) {
-    if (String(topic) == lightCommandTopic) {
+void callbackAction(String topic, String messageStr) {
+    if (topic == lightCommandTopic) {
         StaticJsonDocument<64> root;
 
         DeserializationError error = deserializeJson(root, messageStr);
@@ -74,7 +74,7 @@ void callbackAction(char* topic, String messageStr) {
 
             publishLightState(outState);
         }
-    }
+    }    
 }
 
 void publishMotion(boolean motionDetected) {
@@ -92,6 +92,10 @@ void publishMotion(boolean motionDetected) {
     serializeJson(motionMsg, bufferMotion);
 
     publishMessage(motionStateTopic.c_str(), bufferMotion);
+    publishLightState("");
+}
+
+void publishControllerState() {
     publishLightState("");
 }
 

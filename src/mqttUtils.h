@@ -13,6 +13,7 @@ extern String lightConfigTopic;
 extern String motionStateTopic;
 extern String lightStateTopic;
 extern String lightCommandTopic;
+extern String nodeStateTopic;
 
 boolean mqttConnectToBroker();
 void publishMessage(const char *topic, String message);
@@ -23,6 +24,6 @@ String generateFullDeviceName(String nodeNameBase);
 void mqttUtilsInit(String nodeMac);
 void handleClientLoop();
 boolean setupWifi();
-
+void publishControllerInnerState();
 
 #endif

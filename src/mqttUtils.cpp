@@ -18,6 +18,10 @@ String lightCommandTopic = "";
 
 String nodeName = "";
 String nodeMacAddress = "";
+
+String nodeStateConfigTopic = "";
+String nodeStateTopic = "";
+
 int qos = 0;
 
 unsigned long lastReconnectAttempt = 0;
@@ -50,6 +54,7 @@ boolean setupWifiInner(String ssid, String pwd) {
             Serial.println("WiFi connected");
             Serial.println("IP address: ");
             Serial.println(WiFi.localIP());
+            connectedSSID = ssid;
         } else {
             Serial.print("Connection to: ");
             Serial.print(ssid);
@@ -78,6 +83,7 @@ boolean setupWifi() {
     if (!isConnected) {
         now = millis();
         apModeStartTime = now;
+        connectedSSID = "";
         if (!apStarted) {
             WiFi.disconnect();
             delay(1000);
@@ -111,6 +117,11 @@ boolean mqttConnectToBroker() {
             client.subscribe(lightCommandTopic.c_str());
             Serial.print("subscribing to: ");
             Serial.println(lightCommandTopic.c_str());
+
+/*             client.subscribe(nodeStateTopic.c_str());
+            Serial.print("subscribing to: ");
+            Serial.println(nodeStateTopic.c_str());
+            publishControllerState(); */
             return true;
         } else {
             Serial.print("failed, rc=");
@@ -136,10 +147,12 @@ void publishMessage(const char *topic, String message) {
 void generateTopics() {
     motionConfigTopic = "homeassistant/binary_sensor/" + nodeName + "/pir/config";
     lightConfigTopic = "homeassistant/light/" + nodeName + "/config";
+    nodeStateConfigTopic = "homeassistant/sensor/" + nodeName + "/sensor/config";
 
     motionStateTopic = "homeassistant/binary_sensor/" + nodeName + "/pir";
     lightStateTopic = "homeassistant/light/" + nodeName;
     lightCommandTopic = "homeassistant/light/" + nodeName + "/set";
+    nodeStateTopic = "homeassistant/sensor/" + nodeName + "/state";
 }
 
 void removeDeviceFromHomeAssistant() {
@@ -178,7 +191,7 @@ void registerDeviceInHomeAssistant() {
     //register light
     StaticJsonDocument<512> lightMsg;
 
-    lightMsg["name"] = nodeName + "-light";
+/*     lightMsg["name"] = nodeName + "-light";
     lightMsg["platform"] = "mqtt";
     lightMsg["state_topic"] = lightStateTopic;
     lightMsg["command_topic"] = lightCommandTopic;
@@ -202,7 +215,61 @@ void registerDeviceInHomeAssistant() {
 
     serializeJson(lightMsg, buffer_light);
 
-    publishMessage(lightConfigTopic.c_str(), buffer_light);
+    publishMessage(lightConfigTopic.c_str(), buffer_light); */
+
+    //register controller state topic
+    //lightMsg.clear();
+
+    lightMsg["name"] = String(nodeName + "_status");
+    lightMsg["platform"] = "mqtt";
+        motionMsg["device_class"] = "sensor";
+    lightMsg["state_topic"] = nodeStateTopic;
+    lightMsg["json_attributes_topic"] = nodeStateTopic;
+    lightMsg["payload_available"]= "Online";
+  lightMsg["payload_not_available"]= "Offline";
+    lightMsg["unique_id"] = String(nodeName + "_status");
+    lightMsg["value_template"] = "{{value_json['RSSI']}}";
+    lightMsg["unit_of_measurement"] = "%";
+    lightMsg["icon"] = "mdi:information-outline";
+
+    lightMsg["schema"] = "json";
+    lightMsg["qos"] = qos;
+
+    JsonObject data2 = lightMsg.createNestedObject("device");
+
+    JsonArray identData2 = data2.createNestedArray("identifiers");
+    identData2.add(nodeMacAddress);
+
+    lightMsg["name"] = nodeName;
+    lightMsg["model"] = "Node-01";
+    lightMsg["manufacturer"] = "Pueblo";
+
+    char buffer_state[512];
+
+    serializeJson(lightMsg, buffer_state);
+
+    publishMessage(nodeStateConfigTopic.c_str(), buffer_state);
+}
+
+void publishControllerInnerState(){
+        StaticJsonDocument<512> stateJson;
+
+    stateJson["Time"] = "2021-01-17T15:32:59";
+        stateJson["Uptime"] = "19T02:31:04";
+    stateJson["Heap"] = "2137";
+
+    JsonObject wifi = stateJson.createNestedObject("WiFi");
+
+wifi["AP"]= "1";
+wifi["RSSI"]= "70";
+wifi["SSID"]= "HA-IOT";
+
+    char buffer_state[512];
+
+    serializeJson(stateJson, buffer_state);
+
+    publishMessage(nodeStateTopic.c_str(), buffer_state);
+
 }
 
 void callback(char *topic, byte *message, unsigned int length) {
@@ -215,8 +282,13 @@ void callback(char *topic, byte *message, unsigned int length) {
         messageStr += (char)message[i];
     }
     Serial.println(messageStr);
+    String incTopic = String(topic);
 
-    callbackAction(topic, messageStr);
+/*     if (incTopic == nodeStateTopic){
+        publishContollerInnerState();
+    } */
+
+    callbackAction(incTopic, messageStr);
 }
 
 String generateFullDeviceName(String nodeNameBase) {

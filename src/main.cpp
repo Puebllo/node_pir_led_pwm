@@ -20,6 +20,7 @@ void setup() {
     if (WiFi.status() == WL_CONNECTED) {
         if (mqttConnectToBroker()){
             publishLightState("");
+            publishControllerInnerState();
         }
     }
 

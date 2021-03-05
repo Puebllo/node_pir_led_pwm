@@ -31,3 +31,4 @@ int brightnessPercent = 0;
 
 boolean mqttCredsConfigured = false;
 
+String connectedSSID = "";

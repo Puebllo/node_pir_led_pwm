@@ -42,5 +42,6 @@ extern int brightnessPercent;
 
 extern boolean mqttCredsConfigured;
 
+extern String connectedSSID;
 
 #endif
