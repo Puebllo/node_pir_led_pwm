@@ -12,7 +12,7 @@
 #define WIFI_RECONNECT_TIME_IN_MS 600000
 #define MQTT_BROKER_RECONNECT_TIME_IN_MS 300000
 
-extern const int ledPin;
+extern const int relayPin;
 extern const int motionSensor;
 
 extern unsigned long now;

@@ -1,7 +1,7 @@
 #include "variables.h"
 
 //IO
-const int ledPin = 12;
+const int relayPin = 12;
 const int motionSensor = 14;
 
 unsigned long now = millis();

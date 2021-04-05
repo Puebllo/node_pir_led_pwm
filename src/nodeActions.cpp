@@ -20,7 +20,7 @@ void setBrightness(int percent) {
 void fadeIn(int brightnessPecent) {
     for (int i = 0; i <= brightnessPecent; i++) {
         int step = mapDouble(i, 0, 100, 0, 1024);
-        analogWrite(ledPin, step);
+        analogWrite(relayPin, step);
         delay(fadeInMs);
     }
 }
@@ -28,7 +28,7 @@ void fadeIn(int brightnessPecent) {
 void fadeOut(int brightnessPecent) {
     for (int i = brightnessPecent; i >= 0; i--) {
         int step = mapDouble(i, 0, 100, 0, 1024);
-        analogWrite(ledPin, step);
+        analogWrite(relayPin, step);
         delay(fadeOutMs);
     }
 }

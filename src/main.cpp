@@ -9,8 +9,9 @@ void setup() {
     delay(200);
     loadDataFromEEPROM();
 
+
     pinMode(motionSensor, INPUT_PULLDOWN_16);
-    pinMode(ledPin, OUTPUT);
+    pinMode(relayPin, OUTPUT);
 
     setBrightness(defBrightnessPercent);
     WiFi.disconnect();
